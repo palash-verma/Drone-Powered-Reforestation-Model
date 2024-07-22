@@ -2,6 +2,18 @@ import cv2
 from dronekit import connect, VehicleMode, LocationGlobalRelative
 import time
 import numpy as np
+import RPi.GPIO as GPIO
+import time
+
+# Set GPIO numbering mode
+GPIO.setmode(GPIO.BOARD)
+
+# Set pin 11 as an output, and set servo1 as pin 11 as PWM
+GPIO.setup(11, GPIO.OUT)
+GPIO.setup(12, GPIO.OUT)
+servo1 = GPIO.PWM(11, 50)  # pin 11 for PWM with 50Hz
+servo2 = GPIO.PWM(12, 50)  # pin 11 for PWM with 50Hz
+
 
 def connect_drone():
     vehicle = connect('127.0.0.1:14550', wait_ready=True)
@@ -78,11 +90,49 @@ def main():
 
 def drop_seeds(location):
     print("Dropping seeds at:", location)
-    # Code to drop seeds
+    # Start PWM running, with value of 0 (pulse off)
+    servo1.start(0)
+
+    try:
+    # Function to set angle of the servo
+        def set_servo_angle(angle):
+            duty = angle / 18 + 2
+            GPIO.output(11, True)
+            servo1.ChangeDutyCycle(duty)
+            time.sleep(1)
+            GPIO.output(11, False)
+            servo1.ChangeDutyCycle(0)
+    
+            # Rotate servo to 90 degrees
+            set_servo_angle(90)
+
+    finally:
+        # Clean up GPIO settings
+        servo1.stop()
+        GPIO.cleanup()
 
 def irrigate(location):
     print("Irrigating at:", location)
-    # Code to irrigate
+    servo2.start(0)
+
+    try:
+    # Function to set angle of the servo
+        def set_servo_angle(angle):
+            duty = angle / 18 + 2
+            GPIO.output(12, True)
+            servo2.ChangeDutyCycle(duty)
+            time.sleep(1)
+            GPIO.output(12, False)
+            servo1.ChangeDutyCycle(0)
+    
+            # Rotate servo to 90 degrees
+            set_servo_angle(90)
+
+    finally:
+        # Clean up GPIO settings
+        servo2.stop()
+        GPIO.cleanup()
+
 
 if __name__ == '__main__':
     main()
